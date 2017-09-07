@@ -1,7 +1,19 @@
 import axios from 'axios'
 
 export default {
-  get (url, indexParams) {
+  get (url, options) {
+    options = Object.assign({
+      reader: function(response) {
+        return response.data.data
+      },
+      params: {
+        fill: null,
+        create: null,
+        update: null,
+        delete: null,
+      }
+    }, options)
+
     return {
       /*
        * Fill the "all" state by making a GET request to the endpoint
@@ -10,9 +22,9 @@ export default {
         let self = this
 
         return new Promise((resolve, reject) => {
-          axios.get(url, {params: indexParams}).then(response => {
+          axios.get(url, {params: options.params.fill}).then(response => {
             // Get the data and fill the "all" store by commiting the "fill" mutation manually
-            commit('fill', {stateName: 'all', payload: response.data})
+            commit('fill', {stateName: 'all', payload: options.reader(response)})
 
             resolve()
           })
@@ -24,7 +36,7 @@ export default {
        */
       create ({commit}, item) {
         return new Promise((resolve, reject) => {
-          axios.post(url, item).then(response => {
+          axios.post(url, item, {params: options.params.create}).then(response => {
             // Here we dont commit any data as we prefer waiting the mutation
             // from the server through laravel-vuex
 
@@ -38,7 +50,7 @@ export default {
        */
       update ({commit}, item) {
         return new Promise((resolve, reject) => {
-          axios.put(url + '/' + item.id, item).then(response => {
+          axios.put(url + '/' + item.id, item, {params: options.params.update}).then(response => {
             // Here we dont commit any data as we prefer waiting the mutation
             // from the server through laravel-vuex
 
@@ -52,7 +64,7 @@ export default {
        */
       delete ({commit}, item) {
         return new Promise((resolve, reject) => {
-          axios.delete(url + '/' + item.id, item).then(response => {
+          axios.delete(url + '/' + item.id, item, {params: options.params.delete}).then(response => {
             // Here we dont commit any data as we prefer waiting the mutation
             // from the server through laravel-vuex
 
