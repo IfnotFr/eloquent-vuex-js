@@ -8,18 +8,24 @@ This is the Vuejs client package for [Laravel Vuex](https://github.com/Ifnot/lar
 
 ### Configuration
 
-#### Listen Echo events
+#### Bring Echo events to your Stores
 
-Listen to your `public` channel for a `laravel.vuex:mutation` events and broadcast them to your store :
+Use the built-in `StoreCommiter` for a quick start :
 
 ```js
-Echo.channel('public')
-  .listen('.laravel.vuex:mutation', (e) => {
-    store.commit(e.namespace + '/' + e.mutation, {
-    stateName: e.state,
-    payload: e.payload
-  })
-});
+// Prepare your echo configuration
+import Echo from 'laravel-echo'
+let echo = new Echo({ ... })
+
+// Load your vuex store object (in my example i just put it inside a ./store.js)
+import store from './store'
+
+// Set the channels you want to use (by default "public")
+let channels = ['public']
+
+// Map the events with the StoreCommiter
+import StoreCommiter from 'laravel-vuex/store-commiter'
+Vue.use(StoreCommiter, { echo, channels, stor })
 ```
 
 #### Configure Vuex
