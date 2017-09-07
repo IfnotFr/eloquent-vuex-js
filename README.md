@@ -25,7 +25,7 @@ let channels = ['public']
 
 // Map the events with the StoreCommiter
 import StoreCommiter from 'laravel-vuex/store-commiter'
-Vue.use(StoreCommiter, { echo, channels, stor })
+Vue.use(StoreCommiter, { echo, channels, store })
 ```
 
 #### Configure Vuex
@@ -49,7 +49,7 @@ export default new Vuex.Store({
 })
 ```
 
-##### `cars` store odule :
+##### `cars` store module :
 
 ```js
 import EventMutations from 'laravel-vuex/mutations/event-mutations'
