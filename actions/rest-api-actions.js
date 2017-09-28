@@ -1,13 +1,31 @@
 import axios from 'axios'
+import Vue from 'vue'
+
+let parametrize = function (params, replacement) {
+  if (!params) {
+    return null
+  }
+
+  params = JSON.stringify(params)
+
+  for (let name in replacement) {
+    let regex = new RegExp(':' + name, 'g')
+    params = params.replace(regex, replacement[name])
+  }
+
+  return JSON.parse(params)
+}
 
 export default {
   get (url, options) {
     options = Object.assign({
-      reader: function(response) {
+      axios: axios,
+      reader: function (response) {
         return response.data.data
       },
       params: {
         fill: null,
+        load: null,
         create: null,
         update: null,
         delete: null,
@@ -15,28 +33,48 @@ export default {
     }, options)
 
     return {
-      /*
-       * Fill the "all" state by making a GET request to the endpoint
-       */
-      fill ({commit}) {
+      fill ({commit}, {state = 'all'} = {}) {
         let self = this
 
         return new Promise((resolve, reject) => {
-          axios.get(url, {params: options.params.fill}).then(response => {
+          options.axios.get(url, {params: options.params.fill}).then(response => {
             // Get the data and fill the "all" store by commiting the "fill" mutation manually
-            commit('fill', {stateName: 'all', payload: options.reader(response)})
+            commit('fill', {state, items: options.reader(response)})
 
             resolve()
           })
         })
       },
 
-      /*
-       * Create a new item by making a POST request to the endpoint
-       */
-      create ({commit}, item) {
+      load ({commit}, {state = 'all', ids = []} = {}) {
+        let self = this
+
+        if (typeof id === 'object') {
+          let id = ids.join(',')
+        }
+
         return new Promise((resolve, reject) => {
-          axios.post(url, item, {params: options.params.create}).then(response => {
+          options.axios.get(url, {params: parametrize(options.params.load, {ids})}).then(response => {
+            commit('push', {state, items: options.reader(response)})
+
+            resolve()
+          })
+        })
+      },
+
+      empty ({commit}, {state = 'all'} = {}) {
+        let self = this
+
+        return new Promise((resolve, reject) => {
+          commit('fill', {state, items: []})
+
+          resolve()
+        })
+      },
+
+      create ({commit}, {item}) {
+        return new Promise((resolve, reject) => {
+          options.axios.post(url, item, {params: options.params.create}).then(response => {
             // Here we dont commit any data as we prefer waiting the mutation
             // from the server through laravel-vuex
 
@@ -45,12 +83,9 @@ export default {
         })
       },
 
-      /*
-       * Update an existing item by making a PUT request to the endpoint plus the item id
-       */
-      update ({commit}, item) {
+      update ({commit}, {item}) {
         return new Promise((resolve, reject) => {
-          axios.put(url + '/' + item.id, item, {params: options.params.update}).then(response => {
+          options.axios.put(url + '/' + item.id, item, {params: options.params.update}).then(response => {
             // Here we dont commit any data as we prefer waiting the mutation
             // from the server through laravel-vuex
 
@@ -59,12 +94,9 @@ export default {
         })
       },
 
-      /*
-       * Delete an existing item by making a DELETE request to the endpoint plus the item id
-       */
-      delete ({commit}, item) {
+      delete ({commit}, {item}) {
         return new Promise((resolve, reject) => {
-          axios.delete(url + '/' + item.id, item, {params: options.params.delete}).then(response => {
+          options.axios.delete(url + '/' + item.id, item, {params: options.params.delete}).then(response => {
             // Here we dont commit any data as we prefer waiting the mutation
             // from the server through laravel-vuex
 
