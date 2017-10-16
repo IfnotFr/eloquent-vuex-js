@@ -18,8 +18,7 @@ class PartialState {
 
         vue.$watch(() => {
           return store.getters[partial.namespace + '/' + partial.getter]
-        }, (newValues) => {
-          let oldValues = store.state.clients[partial.state].map(item => item.id)
+        }, (newValues, oldValues) => {
           self.syncItems(store, partial, oldValues, newValues)
         })
       }
