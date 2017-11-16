@@ -15,7 +15,7 @@ export default {
 
     events.emit(event.vuex.namespace + '/' + event.vuex.mutation, options)
 
-    if (['create', 'update', 'delete'].indexOf(event.vuex.mutation) !== -1) {
+    if (typeof store._modules.root._children[event.vuex.namespace]._rawModule.mutations[event.vuex.mutation] !== 'undefined') {
       store.commit(event.vuex.namespace + '/' + event.vuex.mutation, options)
     }
   },
