@@ -5,8 +5,6 @@ let vue = new Vue
 
 class PartialState {
   install (laravelVuex, options) {
-    this.laravelVuex = laravelVuex
-
     let self = this
     let store = laravelVuex.store
 
@@ -14,7 +12,7 @@ class PartialState {
       for (let i = 0; i < options.partialStates.length; i++) {
         let partial = options.partialStates[i]
 
-        this.laravelVuex.log('Watching : ' + partial.namespace + '/' + partial.getter + ' for sycing partial state ' + partial.namespace + '/' + partial.state)
+        console.log('[ LARAVEL VUEX ] Watching ids ' + partial.namespace + '/' + partial.getter + ' for state ' + partial.namespace + '/' + partial.state)
 
         vue.$watch(() => {
           return store.getters[partial.namespace + '/' + partial.getter]
@@ -29,7 +27,7 @@ class PartialState {
     let added = _.difference(newValues, oldValues)
     let deleted = _.difference(oldValues, newValues)
 
-    this.laravelVuex.log('Sycing added : "' + added + '", and deleted "' + deleted + '" to ' + partial.namespace + '/' + partial.state)
+    console.log('[ LARAVEL VUEX ] ' + partial.namespace + '/' + partial.state + ' : ', 'added', added, 'deleted', deleted)
 
     this.deleteItems(store, partial.namespace, partial.state, deleted)
     this.loadItems(store, partial.namespace, partial.state, added)
