@@ -15,15 +15,17 @@ export default {
           options.items = [options.item]
         }
 
+        let items = []
         for (let i = 0; i < options.items.length; i++) {
           if (!iteminStore(states[options.state], options.items[i])) {
-            states[options.state].push(options.items[i])
+            items.push(options.items[i])
           }
         }
+        states[options.state] = states[options.state].concat(items)
       },
       create (states, {state, item}) {
         if (!iteminStore(states[state], item)) {
-          states[state].push(item)
+          states[state] = states[state].concat(item)
         }
       },
       update (states, {state, item}) {
