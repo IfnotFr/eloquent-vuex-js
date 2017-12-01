@@ -50,7 +50,12 @@ class PartialState {
 
   loadItems (store, namespace, state, ids) {
     if (ids.length > 0) {
-      store.dispatch(namespace + '/load', {state, ids})
+      let chunk = 100
+      let j = ids.length
+
+      for (let i = 0; i < j; i += chunk) {
+        store.dispatch(namespace + '/load', {state, ids: ids.slice(i, i + chunk)})
+      }
     }
   }
 }
