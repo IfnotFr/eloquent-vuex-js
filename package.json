@@ -1,6 +1,6 @@
 {
   "name": "laravel-vuex",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "homepage": "https://github.com/Ifnot/laravel-vuex-js",
   "bugs": "https://github.com/Ifnot/laravel-vuex-js/issues",
   "description": "The vuejs library for Laravel Vuex.",
