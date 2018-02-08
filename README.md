@@ -65,3 +65,5 @@ export default {
 ```
 
 ### Collections
+
+To be continued ...
