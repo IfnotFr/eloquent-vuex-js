@@ -1,35 +1,146 @@
-import Echo from './plugins/echo'
-import PartialState from './plugins/partial-state'
+import EventEmitter from 'events'
+import State from './eloquent/state'
+import Collection from './eloquent/collection'
 
-class LaravelVuex extends Function {
-  constructor (options) {
-    super('...args', 'return this.init(...args)')
-
-    this.options = Object.assign({
-      debug: false,
-      plugins: [
-        new Echo,
-        new PartialState
-      ]
-    }, options)
-
-    return this.bind(this)
+class EloquentVuex {
+  constructor () {
+    this.states = {}
+    this.events = new EventEmitter()
   }
 
-  init (store) {
+  install (Vue, {echo, store}, options) {
+    this.echo = echo
     this.store = store
 
-    for (let i = 0; i < this.options.plugins.length; i++) {
-      let plugin = this.options.plugins[i]
-      plugin.install(this, this.options)
+    this.options = this.getOptions(options)
+
+    // Subscribing to channels
+    if (this.options.channel.length > 0) {
+      this.listenPublic(this.options.channel)
+    }
+    if (this.options.private.length > 0) {
+      this.listenPrivate(this.options.channel)
+    }
+
+    // Binding this singleton proxified to vue
+    Vue.prototype.$eloquent = new Proxy(this, {
+      get: (target, name) => {
+        if(name in target) {
+          return target[name]
+        } else {
+          return new Proxy(target.states[name], {
+            get: (target, name) => {
+              return name in target ? target[name] : target.collections[name]
+            }
+          })
+        }
+      }
+    })
+  }
+
+  createState (store, path) {
+    let module = null
+    let name = null
+
+    if (path.indexOf('/') !== -1) {
+      var lastIndex = path.lastIndexOf('/')
+      module = path.substr(0, lastIndex)
+      name = path.substr(lastIndex + 1)
+    } else {
+      module = null
+      name = path
+    }
+
+    return new State(store, module, name)
+  }
+
+  create (states) {
+    return store => {
+      for (let stateName in states) {
+        this.states[stateName] = this.createState(store, stateName)
+        for (let collectionName in states[stateName]) {
+          this.states[stateName]._addCollection(collectionName, new Collection(this.states[stateName], states[stateName][collectionName]))
+        }
+      }
     }
   }
 
-  log (message) {
-    if (this.options && this.options.debug) {
-      console.log('[ LARAVEL VUEX ] ' + message)
+  getOptions (options) {
+    return Object.assign({
+      channel: [],
+      private: [],
+      debug: false
+    }, options)
+  }
+
+  listenPublic (channels) {
+    let self = this
+
+    if (this.options.debug) console.log('[ ELOQUENT VUEX ] Listening to Echo public channels : ' + channels)
+
+    for (let i = 0; i < channels.length; i++) {
+      this.echo.channel(channels[i])
+        .listen('.Ifnot.EloquentVuex.Events.MutationEvent', (e) => {
+          self.commit(e)
+        })
     }
+  }
+
+  listenPrivate (channels) {
+    let self = this
+
+    if (this.options.debug) console.log('[ ELOQUENT VUEX ] Listening to Echo private channels : ' + channels)
+
+    for (let i = 0; i < channels.length; i++) {
+      this.echo.private(channels[i])
+        .listen('.Ifnot.EloquentVuex.Events.MutationEvent', (e) => {
+          self.commit(e)
+        })
+    }
+  }
+
+  commit (event) {
+    let name = event.vuex.namespace + '/' + event.vuex.mutation
+    let options = {
+      state: event.vuex.state,
+      meta: event.meta,
+      item: event.payload
+    }
+
+    if (this.options.debug) {
+      console.log('[ ELOQUENT VUEX ] Event : ' + name, options)
+    }
+
+    if (typeof(this.states[name]) !== 'undefined') {
+      let state = this.getState(name)
+
+      if (event.vuex.mutation === 'create') {
+        if (state._accepted(options.item)) {
+          state._addItems([options.item])
+        }
+      } else if (event.vuex.mutation === 'update') {
+        if (state._exists(options.item)) {
+          state._updateItems([options.item])
+        }
+      } else if (event.vuex.mutation === 'delete') {
+        if (state._exists(options.item)) {
+          state._removeItems([options.item])
+        }
+      }
+    } else {
+      this.store.commit(name, options)
+    }
+
+    this.events.emit(name, options)
+  }
+
+  on (event, handler) {
+    this.events.on(event, handler)
+  }
+
+  once (event, handler) {
+    this.events.once(event, handler)
   }
 }
 
-export default LaravelVuex
+export let eloquentVuex = new EloquentVuex()

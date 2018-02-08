@@ -1,13 +1,13 @@
 {
-  "name": "laravel-vuex",
-  "version": "0.2.6",
-  "homepage": "https://github.com/Ifnot/laravel-vuex-js",
-  "bugs": "https://github.com/Ifnot/laravel-vuex-js/issues",
-  "description": "The vuejs library for Laravel Vuex.",
+  "name": "eloquent-vuex",
+  "version": "0.1",
+  "homepage": "https://github.com/Ifnot/eloquent-vuex-js",
+  "bugs": "https://github.com/Ifnot/eloquent-vuex-js/issues",
+  "description": "The vuejs library for Eloquent Vuex.",
   "main": "index.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Ifnot/laravel-vuex-js"
+    "url": "https://github.com/Ifnot/eloquent-vuex-js"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

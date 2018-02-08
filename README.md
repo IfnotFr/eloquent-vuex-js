@@ -1,10 +1,10 @@
-# Laravel Vuex (Client) - WIP
+# Eloquent Vuex (Client) - WIP
 
-This is the Vuejs client package for [Laravel Vuex](https://github.com/Ifnot/laravel-vuex-php).
+This is the Vuejs client package for [Eloquent Vuex](https://github.com/Ifnot/eloquent-vuex-php).
 
 ## Installation
 
-    npm install -S laravel-vuex
+    npm install -S eloquent-vuex
 
 ### Configuration
 
@@ -24,7 +24,7 @@ import store from './store'
 let channels = ['public']
 
 // Map the events with the StoreCommiter
-import StoreCommiter from 'laravel-vuex/store-commiter'
+import StoreCommiter from 'eloquent-vuex/store-commiter'
 Vue.use(StoreCommiter, { echo, channels, store })
 ```
 
@@ -52,7 +52,7 @@ export default new Vuex.Store({
 ##### `cars` store module :
 
 ```js
-import EventMutations from 'laravel-vuex/mutations/event-mutations'
+import EventMutations from 'eloquent-vuex/mutations/event-mutations'
 
 const state = {
   all: []
@@ -78,4 +78,4 @@ export default {
 
 ### Example
 
-Take a look at the [Laravel Vuex Js Example](https://github.com/Ifnot/laravel-vuex-js-example).
+Take a look at the [Eloquent Vuex Js Example](https://github.com/Ifnot/eloquent-vuex-js-example).
