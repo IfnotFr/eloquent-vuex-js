@@ -59,7 +59,7 @@ class State {
     })
 
     if(items.length > 0) {
-      console.log('[ ELOQUENT VUEX ] Eloquent : deleted ' + items.length + ' items from ' + this.module + '/' + this.state + '.')
+      console.log('[ ELOQUENT VUEX ] Garbage collector scanned ' + this.module + '/' + this.state + ' and deleted ' + items.length + ' items.')
       this._removeItems(items)
     }
   }

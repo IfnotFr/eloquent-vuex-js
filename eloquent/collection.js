@@ -2,9 +2,10 @@ import Vue from 'vue'
 import EventEmitter from 'events'
 
 class Collection extends EventEmitter {
-  constructor (state, options) {
+  constructor (name, state, options) {
     super()
 
+    this.name = name
     this.state = state
     this.options = options
     this.filter = options.filter ? options.filter : false
@@ -82,7 +83,7 @@ class Collection extends EventEmitter {
     this.working = true
 
     this.loader.apply(this._getBindings(), null).then(items => {
-      console.log('[ ELOQUENT VUEX ] Eloquent : loaded ' + items.length + ' items into ' + self.state.module + '/' + self.state.state + '.')
+      console.log('[ ELOQUENT VUEX ] Collection ' + self.state.module + '/' + self.state.state + '/' + self.name + ' loaded ' + items.length + ' items.')
 
       if (this.filter === false) {
         self.state._addItems(items)
