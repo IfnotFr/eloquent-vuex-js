@@ -56,11 +56,14 @@ class Collection extends EventEmitter {
    * Get all items from the collection
    */
   all () {
+    let self = this
+
     if (this.filter === false) {
-      let self = this
       return this.state.items().filter(item => self.scopedIds.includes(item.id))
     } else {
-      return this.state.items().filter(this.filter)
+      return this.state.items().filter(item => {
+        return self.filter.apply(self._getBindings(), [item])
+      })
     }
   }
 
