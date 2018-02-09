@@ -5,6 +5,12 @@ class Collection extends EventEmitter {
   constructor (name, state, options) {
     super()
 
+    // A vm for handling reactive datas
+    this._vm = new Vue({data: {
+      enabled: false,
+      loading: false
+    }})
+
     this.name = name
     this.state = state
     this.options = options
@@ -13,7 +19,6 @@ class Collection extends EventEmitter {
     this.bindings = null
     this.scopedIds = []
 
-    this.working = false
     this.watcher = () => {}
   }
 
@@ -23,6 +28,8 @@ class Collection extends EventEmitter {
     this._populate()
     this._watchBindings()
 
+    this._vm.$data.enabled = true
+
     this.emit('enabled')
 
     return this
@@ -30,13 +37,19 @@ class Collection extends EventEmitter {
 
   disable () {
     this.scopedIds = []
-    this.working = false
+    this._vm.$data.loading = false
 
     this._stopWatchBindings()
+
+    this._vm.$data.enabled = false
 
     this.emit('disabled')
 
     return this
+  }
+
+  enabled () {
+    return this._vm.$data.enabled
   }
 
   /*
@@ -67,13 +80,13 @@ class Collection extends EventEmitter {
     }
   }
 
+  loading () {
+    return this._vm.$data.loading
+  }
+
   refresh () {
     this._populate()
     return this
-  }
-
-  loading () {
-    return this.working
   }
 
   /*
@@ -83,7 +96,7 @@ class Collection extends EventEmitter {
     let self = this
 
     self.emit('loading')
-    this.working = true
+    self._vm.$data.loading = true
 
     this.loader.apply(this._getBindings(), null).then(items => {
       console.log('[ ELOQUENT VUEX ] Collection ' + self.state.module + '/' + self.state.state + '/' + self.name + ' loaded ' + items.length + ' items.')
@@ -98,7 +111,7 @@ class Collection extends EventEmitter {
       }
 
       self.emit('loaded', items)
-      self.working = false
+      self._vm.$data.loading = false
     })
   }
 
@@ -127,7 +140,7 @@ class Collection extends EventEmitter {
    * If the following item is not filtered out by the filter
    */
   _accepted (item) {
-    return this.filter(item)
+    return this._vm.$data.enabled && this.filter.apply(this._getBindings(), [item])
   }
 
   _getBindings () {

@@ -59,7 +59,7 @@ class EloquentVuex {
       for (let stateName in states) {
         this.states[stateName] = this.createState(store, stateName)
         for (let collectionName in states[stateName]) {
-          this.states[stateName]._addCollection(collectionName, new Collection(this.states[stateName], states[stateName][collectionName]))
+          this.states[stateName]._addCollection(collectionName, new Collection(collectionName, this.states[stateName], states[stateName][collectionName]))
         }
       }
     }
