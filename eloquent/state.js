@@ -68,8 +68,8 @@ class State {
    * If this item is compatible with this state (thought all created collections into it)
    */
   _accepted (item) {
-    for (let i = 0; i < this.collections.length; i++) {
-      if(this.collections[i]._accepted(item)) {
+    for (let name in this.collections) {
+      if(this.collections[name]._accepted(item)) {
         return true
       }
     }
