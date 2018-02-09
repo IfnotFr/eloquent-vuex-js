@@ -42,7 +42,7 @@ class Collection extends EventEmitter {
    * Get one item from the collection or return null
    */
   get (offset) {
-    let items = this.items()
+    let items = this.all()
 
     if (items[offset]) {
       return items[offset]
@@ -55,11 +55,14 @@ class Collection extends EventEmitter {
    * Get all items from the collection
    */
   all () {
+    let self = this
+
     if (this.filter === false) {
-      let self = this
       return this.state.items().filter(item => self.scopedIds.includes(item.id))
     } else {
-      return this.state.items().filter(this.filter)
+      return this.state.items().filter(item => {
+        return self.filter.apply(self._getBindings(), [item])
+      })
     }
   }
 
@@ -98,6 +101,9 @@ class Collection extends EventEmitter {
     })
   }
 
+  /*
+   * Enable the bindings watching in order to reload the item set when the params changes
+   */
   _watchBindings () {
     let self = this
     let vue = new Vue()
@@ -115,6 +121,9 @@ class Collection extends EventEmitter {
     }
   }
 
+  /*
+   * Stop the bindings watching
+   */
   _stopWatchBindings () {
     this.watcher()
   }
@@ -126,6 +135,9 @@ class Collection extends EventEmitter {
     return this.filter(item)
   }
 
+  /*
+   * Build a bindings object to be used for filter and loader
+   */
   _getBindings () {
     return Object.assign(this.options, this.bindings)
   }
