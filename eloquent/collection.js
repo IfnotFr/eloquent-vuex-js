@@ -43,7 +43,7 @@ class Collection extends EventEmitter {
    * Get one item from the collection or return null
    */
   get (offset) {
-    let items = this.items()
+    let items = this.all()
 
     if (items[offset]) {
       return items[offset]
