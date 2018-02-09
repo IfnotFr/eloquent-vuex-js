@@ -115,6 +115,9 @@ class Collection extends EventEmitter {
     })
   }
 
+  /*
+   * Enable the bindings watching in order to reload the item set when the params changes
+   */
   _watchBindings () {
     let self = this
     let vue = new Vue()
@@ -132,6 +135,9 @@ class Collection extends EventEmitter {
     }
   }
 
+  /*
+   * Stop the bindings watching
+   */
   _stopWatchBindings () {
     this.watcher()
   }
@@ -143,6 +149,9 @@ class Collection extends EventEmitter {
     return this._vm.$data.enabled && this.filter.apply(this._getBindings(), [item])
   }
 
+  /*
+   * Build a bindings object to be used for filter and loader
+   */
   _getBindings () {
     return Object.assign(this.options, this.bindings)
   }
