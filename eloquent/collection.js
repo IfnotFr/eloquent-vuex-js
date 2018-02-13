@@ -2,31 +2,39 @@ import Vue from 'vue'
 import EventEmitter from 'events'
 
 class Collection extends EventEmitter {
-  constructor (name, state, options) {
+  constructor (name, state, handler) {
     super()
 
     // A vm for handling reactive datas
-    this._vm = new Vue({data: {
-      enabled: false,
-      loading: false
-    }})
+    this._vm = new Vue({
+      data: {
+        enabled: false,
+        loading: false
+      }
+    })
 
     this.name = name
     this.state = state
-    this.options = options
-    this.filter = options.filter ? options.filter : false
-    this.loader = options.loader
-    this.bindings = null
+    this.handler = handler
+    this.options = null
     this.scopedIds = []
 
-    this.watcher = () => {}
+    this.watchers = {
+      options: null,
+      items: null
+    }
   }
 
-  enable (bindings) {
-    this.bindings = bindings
+  enable (options) {
+    if (this.enabled()) {
+      this.refresh(options)
+      return this
+    }
+
+    this._setOptions(options)
 
     this._populate()
-    this._watchBindings()
+    this._watchOptions()
 
     this._vm.$data.enabled = true
 
@@ -39,17 +47,47 @@ class Collection extends EventEmitter {
     this.scopedIds = []
     this._vm.$data.loading = false
 
-    this._stopWatchBindings()
+    this._stopWatchItems()
+    this._stopWatchOptions()
 
     this._vm.$data.enabled = false
+
+    this.removeAllListeners()
 
     this.emit('disabled')
 
     return this
   }
 
-  enabled () {
-    return this._vm.$data.enabled
+  clone () {
+    let number = 1
+    let name = null
+    do {
+      name = this.name + '_(clone_' + number + ')'
+      number++
+    } while (this.state._hasCollection(name))
+
+    let collection = new Collection(name, this.state, Object.assign({}, this.handler))
+    this.state._addCollection(name, collection)
+    return collection
+  }
+
+  destroy () {
+    if (this.enabled()) {
+      this.disable()
+    }
+
+    delete this.state._removeCollection(this.name)
+  }
+
+  refresh (options) {
+    if (options) {
+      this._setOptions(options)
+    }
+
+    this._populate()
+
+    return this
   }
 
   /*
@@ -71,12 +109,12 @@ class Collection extends EventEmitter {
   all () {
     let self = this
 
-    if (this.filter === false) {
-      return this.state.items().filter(item => self.scopedIds.includes(item.id))
-    } else {
+    if (this.handler.filter) {
       return this.state.items().filter(item => {
-        return self.filter.apply(self._getBindings(), [item])
+        return self.handler.filter(item)
       })
+    } else {
+      return this.state.items().filter(item => self.scopedIds.includes(item.id))
     }
   }
 
@@ -84,9 +122,13 @@ class Collection extends EventEmitter {
     return this._vm.$data.loading
   }
 
-  refresh () {
-    this._populate()
-    return this
+  enabled () {
+    return this._vm.$data.enabled
+  }
+
+  _setOptions (options) {
+    this.handler.options = options
+    this.options = options
   }
 
   /*
@@ -98,33 +140,65 @@ class Collection extends EventEmitter {
     self.emit('loading')
     self._vm.$data.loading = true
 
-    this.loader.apply(this._getBindings(), null).then(items => {
+    this.handler.loader().then(items => {
       console.log('[ ELOQUENT VUEX ] Collection ' + self.state.module + '/' + self.state.state + '/' + self.name + ' loaded ' + items.length + ' items.')
 
-      if (this.filter === false) {
+      if (this.handler.filter) {
+        let filtered = items.filter(item => {
+          return self.handler.filter(item)
+        })
+
+        if (filtered.length !== items.length) {
+          console.warn('[ ELOQUENT VUEX ] Collection ' + self.state.module + '/' + self.state.state + '/' + self.name + ' loaded ' + items.length + ' items, but filtered ' + (items.length + filtered.length) + ' of them directly. Make sure your loader and your filter conditions are similar in order to optimize items loading.')
+        }
+
+        self.state._addItems(filtered)
+      } else {
         self.state._addItems(items)
         this.scopedIds = items.map(item => item.id)
-      } else {
-        self.state._addItems(items.filter(item => {
-          return self.filter.apply(self._getBindings(), [item])
-        }))
       }
 
-      self.emit('loaded', items)
+      self.emit('updated', self.all())
+      self.emit('loaded', self.all())
       self._vm.$data.loading = false
+
+      this._stopWatchItems()
+      this._watchItems()
     })
   }
 
-  /*
-   * Enable the bindings watching in order to reload the item set when the params changes
-   */
-  _watchBindings () {
+  _watchItems () {
     let self = this
     let vue = new Vue()
 
-    if (this.bindings) {
-      this.watcher = vue.$watch(() => {
-        return self.bindings
+    if (this.watchers.items === null) {
+      this.watchers.items = vue.$watch(() => {
+        return this.all()
+      }, (values) => {
+        self.emit('updated', self.all())
+      })
+    }
+  }
+
+  /*
+   * Stop the bindings watching
+   */
+  _stopWatchItems () {
+    if (this.watchers.items) {
+      this.watchers.items()
+    }
+  }
+
+  /*
+   * Enable the options watching in order to reload the item set when the params changes
+   */
+  _watchOptions () {
+    let self = this
+    let vue = new Vue()
+
+    if (this.options) {
+      this.watchers.options = vue.$watch(() => {
+        return self.options
       }, (values) => {
         if (values !== false) {
           self._populate()
@@ -138,22 +212,17 @@ class Collection extends EventEmitter {
   /*
    * Stop the bindings watching
    */
-  _stopWatchBindings () {
-    this.watcher()
+  _stopWatchOptions () {
+    if (this.watchers.options) {
+      this.watchers.options()
+    }
   }
 
   /*
    * If the following item is not filtered out by the filter
    */
   _accepted (item) {
-    return this._vm.$data.enabled && this.filter.apply(this._getBindings(), [item])
-  }
-
-  /*
-   * Build a bindings object to be used for filter and loader
-   */
-  _getBindings () {
-    return Object.assign(this.options, this.bindings)
+    return this._vm.$data.enabled && this.handler.filter(item)
   }
 }
 

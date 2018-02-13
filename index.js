@@ -80,7 +80,7 @@ class EloquentVuex {
 
     for (let i = 0; i < channels.length; i++) {
       this.echo.channel(channels[i])
-        .listen('.Ifnot.EloquentVuex.Events.MutationEvent', (e) => {
+        .listen('.Ifnot\\EloquentVuex\\Events\\MutationEvent', (e) => {
           self.commit(e)
         })
     }
@@ -93,7 +93,7 @@ class EloquentVuex {
 
     for (let i = 0; i < channels.length; i++) {
       this.echo.private(channels[i])
-        .listen('.Ifnot.EloquentVuex.Events.MutationEvent', (e) => {
+        .listen('.Ifnot\\EloquentVuex\\Events\\MutationEvent', (e) => {
           self.commit(e)
         })
     }

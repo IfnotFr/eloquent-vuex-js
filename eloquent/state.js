@@ -11,7 +11,7 @@ class State {
     let self = this
     setInterval(() => {
       self._garbageCollector()
-    }, 60 * 1000)
+    }, 1000)
   }
 
   /*
@@ -44,6 +44,14 @@ class State {
 
   _addCollection(name, collection) {
     this.collections[name] = collection
+  }
+
+  _removeCollection(name) {
+    delete this.collections[name]
+  }
+
+  _hasCollection(name) {
+    return typeof(this.collections[name]) !== 'undefined'
   }
 
   /*

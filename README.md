@@ -1,69 +1,81 @@
 # Eloquent Vuex (Client) - WIP
 
-This is the client side package for [Eloquent Vuex](https://github.com/Ifnot/eloquent-vuex-php).
-
-## Prerequisites
-
-> Before using this package you should have a working Echo installation (client + server). [Please follow the official installation steps from the documentation](https://laravel.com/docs/5.5/broadcasting). You have to be able to send a ping from laravel and read it with Echo.
+This is the Vuejs client package for [Eloquent Vuex](https://github.com/Ifnot/eloquent-vuex-php).
 
 ## Installation
 
-Install with npm :
-
     npm install -S eloquent-vuex
 
-Setup it into your `main.js`, you should instanciate all components like to following :
+### Configuration
 
-```
-// Load vuex store (we assume your installation is into the /store folder)
-import store from './store'
+#### Bring Echo events to your Stores
 
-// Setup your Laravel Echo
-import Echo from 'laravel-echo'
-window.Echo = new Echo({
-    // ...
-})
-
-// Now register eloquent vuex
-import { eloquentVuex } from 'eloquent-vuex'
-Vue.use(eloquentVuex, { echo, store })
-```
-
-## Configuration
-
-### Stores
-
-Here we assume that you are using one vuex module for one eloquent model (please refer to the [Official Vuex Cart Example](https://github.com/vuejs/vuex/tree/dev/examples/shopping-cart)). For small apps you can avoid modules and use a single store containing all your eloquent models.
-
-```
-- store/
-    - index.js
-    - modules/
-        - users.js
-        - cars.js
-```
-
-In `users.js` and `cars.js` you need at least one state and have to append mutations built-in mutations :
+Use the built-in `StoreCommiter` for a quick start :
 
 ```js
+// Prepare your echo configuration
+import Echo from 'laravel-echo'
+let echo = new Echo({ ... })
 
-import Mutations from 'eloquent-vuex/store/mutations'
+// Load your vuex store object (in my example i just put it inside a ./store.js)
+import store from './store'
+
+// Set the channels you want to use (by default "public")
+let channels = ['public']
+
+// Map the events with the StoreCommiter
+import StoreCommiter from 'eloquent-vuex/store-commiter'
+Vue.use(StoreCommiter, { echo, channels, store })
+```
+
+#### Configure Vuex
+
+For each of your laravel models you should create a corresponding store module with the plural, snake case name of your class. Below the examples corresponding to the [server-side example](https://github.com/Ifnot/laravel-vuex-php).
+
+##### Main store :
+
+```js
+import Vue from 'vue'
+import Vuex from 'vuex'
+
+Vue.use(Vuex)
+
+import cars from './modules/cars'
+
+export default new Vuex.Store({
+  modules: {
+    cars
+  }
+})
+```
+
+##### `cars` store module :
+
+```js
+import EventMutations from 'eloquent-vuex/mutations/event-mutations'
 
 const state = {
   all: []
 }
 
-const mutations = {
-  ...Mutations.get() // We are using the ES6 spread operator for merging this object with Mutations.get()
+const getters = {
+  all: state => state.all
 }
+
+const actions = {}
+
+const mutations = EventMutations.get()
 
 export default {
+  namespaced: true,
   state,
-  mutations,
-  // ...
+  getters,
+  actions,
+  mutations
 }
+
 ```
 
-### Collections
+### Example
 
-To be continued ...
+Take a look at the [Eloquent Vuex Js Example](https://github.com/Ifnot/eloquent-vuex-js-example).
