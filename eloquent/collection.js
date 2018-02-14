@@ -16,6 +16,7 @@ class Collection extends EventEmitter {
     this.name = name
     this.state = state
     this.handler = handler
+    this.handler.collection = this
     this.options = null
     this.scopedIds = []
 
@@ -126,6 +127,25 @@ class Collection extends EventEmitter {
     return this._vm.$data.enabled
   }
 
+  addItems(items) {
+    let self = this
+
+    if (this.handler.filter) {
+      let filtered = items.filter(item => {
+        return self.handler.filter(item)
+      })
+
+      if (filtered.length !== items.length) {
+        console.warn('[ ELOQUENT VUEX ] Collection ' + self.state.module + '/' + self.state.state + '/' + self.name + ' loaded ' + items.length + ' items, but filtered ' + (items.length + filtered.length) + ' of them directly. Make sure your loader and your filter conditions are similar in order to optimize items loading.')
+      }
+
+      self.state._addItems(filtered)
+    } else {
+      self.state._addItems(items)
+      this.scopedIds = items.map(item => item.id)
+    }
+  }
+
   _setOptions (options) {
     this.handler.options = options
     this.options = options
@@ -143,20 +163,7 @@ class Collection extends EventEmitter {
     this.handler.loader().then(items => {
       console.log('[ ELOQUENT VUEX ] Collection ' + self.state.module + '/' + self.state.state + '/' + self.name + ' loaded ' + items.length + ' items.')
 
-      if (this.handler.filter) {
-        let filtered = items.filter(item => {
-          return self.handler.filter(item)
-        })
-
-        if (filtered.length !== items.length) {
-          console.warn('[ ELOQUENT VUEX ] Collection ' + self.state.module + '/' + self.state.state + '/' + self.name + ' loaded ' + items.length + ' items, but filtered ' + (items.length + filtered.length) + ' of them directly. Make sure your loader and your filter conditions are similar in order to optimize items loading.')
-        }
-
-        self.state._addItems(filtered)
-      } else {
-        self.state._addItems(items)
-        this.scopedIds = items.map(item => item.id)
-      }
+      self.addItems(items)
 
       self.emit('updated', self.all())
       self.emit('loaded', self.all())
