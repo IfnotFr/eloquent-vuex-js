@@ -11,7 +11,7 @@ class State {
     let self = this
     setInterval(() => {
       self._garbageCollector()
-    }, 1000)
+    }, 60 * 1000)
   }
 
   /*
