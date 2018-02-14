@@ -100,7 +100,8 @@ class EloquentVuex {
   }
 
   commit (event) {
-    let name = event.vuex.namespace + '/' + event.vuex.mutation
+    let mutationName = event.vuex.namespace + '/' + event.vuex.mutation
+    let stateName = event.vuex.namespace + '/' + event.vuex.state
     let options = {
       state: event.vuex.state,
       meta: event.meta,
@@ -108,12 +109,11 @@ class EloquentVuex {
     }
 
     if (this.options.debug) {
-      console.log('[ ELOQUENT VUEX ] Event : ' + name, options)
+      console.log('[ ELOQUENT VUEX ] Mutation : ' + mutationName, options)
     }
 
-    if (typeof(this.states[name]) !== 'undefined') {
-      let state = this.getState(name)
-
+    let state = this.states[stateName]
+    if (typeof(state) !== 'undefined') {
       if (event.vuex.mutation === 'create') {
         if (state._accepted(options.item)) {
           state._addItems([options.item])
@@ -128,10 +128,10 @@ class EloquentVuex {
         }
       }
     } else {
-      this.store.commit(name, options)
+      this.store.commit(mutationName, options)
     }
 
-    this.events.emit(name, options)
+    this.events.emit(mutationName, options)
   }
 
   on (event, handler) {

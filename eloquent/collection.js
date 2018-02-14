@@ -7,9 +7,12 @@ class Collection extends EventEmitter {
 
     // A vm for handling reactive datas
     this._vm = new Vue({
-      data: {
-        enabled: false,
-        loading: false
+      data () {
+        return {
+          enabled: false,
+          loading: false,
+          options: {}
+        }
       }
     })
 
@@ -17,28 +20,27 @@ class Collection extends EventEmitter {
     this.state = state
     this.handler = handler
     this.handler.collection = this
-    this.options = null
     this.scopedIds = []
 
     this.watchers = {
-      options: null,
-      items: null
+      options: null
     }
   }
 
-  enable (options) {
-    if (this.enabled()) {
+  enable (options, watch) {
+    if (this._vm.$data.enabled) {
       this.refresh(options)
       return this
     }
 
     this._setOptions(options)
+    if(typeof(watch) === 'undefined' || watch === true) {
+      this._watchOptions()
+    }
 
     this._populate()
-    this._watchOptions()
 
     this._vm.$data.enabled = true
-
     this.emit('enabled')
 
     return this
@@ -136,7 +138,9 @@ class Collection extends EventEmitter {
       })
 
       if (filtered.length !== items.length) {
-        console.warn('[ ELOQUENT VUEX ] Collection ' + self.state.module + '/' + self.state.state + '/' + self.name + ' loaded ' + items.length + ' items, but filtered ' + (items.length + filtered.length) + ' of them directly. Make sure your loader and your filter conditions are similar in order to optimize items loading.')
+        console.warn('[ ELOQUENT VUEX ] Collection ' + self.state.module + '/' + self.state.state + '/' + self.name + ' loaded ' + items.length + ' items, but filtered ' + (items.length - filtered.length) + ' of them directly. Make sure your loader and your filter conditions are similar in order to optimize items loading.')
+      } else {
+        console.log('[ ELOQUENT VUEX ] Collection ' + self.state.module + '/' + self.state.state + '/' + self.name + ' loaded ' + items.length + ' items.')
       }
 
       self.state._addItems(filtered)
@@ -148,7 +152,7 @@ class Collection extends EventEmitter {
 
   _setOptions (options) {
     this.handler.options = options
-    this.options = options
+    this._vm.$data.options = options
   }
 
   /*
@@ -161,39 +165,13 @@ class Collection extends EventEmitter {
     self._vm.$data.loading = true
 
     this.handler.loader().then(items => {
-      console.log('[ ELOQUENT VUEX ] Collection ' + self.state.module + '/' + self.state.state + '/' + self.name + ' loaded ' + items.length + ' items.')
+      if(items.length > 0) {
+        self.addItems(items)
+      }
 
-      self.addItems(items)
-
-      self.emit('updated', self.all())
       self.emit('loaded', self.all())
       self._vm.$data.loading = false
-
-      this._stopWatchItems()
-      this._watchItems()
     })
-  }
-
-  _watchItems () {
-    let self = this
-    let vue = new Vue()
-
-    if (this.watchers.items === null) {
-      this.watchers.items = vue.$watch(() => {
-        return this.all()
-      }, (values) => {
-        self.emit('updated', self.all())
-      })
-    }
-  }
-
-  /*
-   * Stop the bindings watching
-   */
-  _stopWatchItems () {
-    if (this.watchers.items) {
-      this.watchers.items()
-    }
   }
 
   /*
@@ -203,9 +181,9 @@ class Collection extends EventEmitter {
     let self = this
     let vue = new Vue()
 
-    if (this.options) {
+    if (this.watchers.options === null) {
       this.watchers.options = vue.$watch(() => {
-        return self.options
+        return self._vm.$data.options
       }, (values) => {
         if (values !== false) {
           self._populate()
