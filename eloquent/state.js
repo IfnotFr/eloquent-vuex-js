@@ -78,7 +78,8 @@ class State {
       let collection = self.collections[name]
       let collectionItems = items.filter(item => collection._accepted(item))
       if(collectionItems.length > 0) {
-        this.collections[name].emit('updated', {name: event, items: collectionItems, allItems: collection.all()})
+        this.collections[name].emit('updated', collection.all())
+        this.collections[name].emit('mutation:' + event, collectionItems)
       }
     }
   }

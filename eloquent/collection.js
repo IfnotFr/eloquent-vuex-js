@@ -5,13 +5,23 @@ class Collection extends EventEmitter {
   constructor (name, state, handler) {
     super()
 
+    let self = this
+
     // A vm for handling reactive datas
     this._vm = new Vue({
       data () {
         return {
           enabled: false,
+          enableCount: 0,
           loading: false,
           options: {}
+        }
+      },
+      watch: {
+        enableCount (count) {
+          if(count === 0 && this.enabled) {
+            self._disable()
+          }
         }
       }
     })
@@ -21,39 +31,48 @@ class Collection extends EventEmitter {
     this.handler = handler
     this.handler.collection = this
     this.scopedIds = []
-
-    this.watchers = {
-      options: null
-    }
+    this.watcher = null
   }
 
-  enable (options, watch) {
-    if (this._vm.$data.enabled) {
-      this.refresh(options)
-      return this
+  enable (options, params) {
+    params = Object.assign({
+      watch: true,
+      count: true
+    }, params)
+
+    if(params.count) {
+      this._vm.$data.enableCount++
+    }
+
+    if (this.enabled()) {
+      return this.refresh(options)
     }
 
     this._setOptions(options)
-    if(typeof(watch) === 'undefined' || watch === true) {
+    if(params.watch) {
       this._watchOptions()
     }
 
     this._populate()
 
     this._vm.$data.enabled = true
-    this.emit('enabled')
 
     return this
   }
 
-  disable () {
+  disable (force) {
+    if(force) {
+      this._vm.$data.enableCount = 0
+    } else {
+      this._vm.$data.enableCount--
+    }
+  }
+
+  _disable () {
     this.scopedIds = []
     this._vm.$data.loading = false
-
-    this._stopWatchItems()
-    this._stopWatchOptions()
-
     this._vm.$data.enabled = false
+    this._stopWatchOptions()
 
     this.removeAllListeners()
 
@@ -77,7 +96,7 @@ class Collection extends EventEmitter {
 
   destroy () {
     if (this.enabled()) {
-      this.disable()
+      this.disable(true)
     }
 
     delete this.state._removeCollection(this.name)
@@ -112,7 +131,10 @@ class Collection extends EventEmitter {
   all () {
     let self = this
 
-    if (this.handler.filter) {
+    if (!this.enabled()) {
+      return []
+    }
+    else if (this.handler.filter) {
       return this.state.items().filter(item => {
         return self.handler.filter(item)
       })
@@ -143,7 +165,13 @@ class Collection extends EventEmitter {
         console.log('[ ELOQUENT VUEX ] Collection ' + self.state.module + '/' + self.state.state + '/' + self.name + ' loaded ' + items.length + ' items.')
       }
 
-      self.state._addItems(filtered)
+      if(filtered.length > 0) {
+        self.state._addItems(filtered)
+      } else {
+        // If there is no items to be added into the store, we must still send the updated event
+        this.emit('updated', this.all())
+        this.emit('mutation:create', filtered)
+      }
     } else {
       self.state._addItems(items)
       this.scopedIds = items.map(item => item.id)
@@ -165,9 +193,7 @@ class Collection extends EventEmitter {
     self._vm.$data.loading = true
 
     this.handler.loader().then(items => {
-      if(items.length > 0) {
-        self.addItems(items)
-      }
+      self.addItems(items)
 
       self.emit('loaded', self.all())
       self._vm.$data.loading = false
@@ -181,8 +207,8 @@ class Collection extends EventEmitter {
     let self = this
     let vue = new Vue()
 
-    if (this.watchers.options === null) {
-      this.watchers.options = vue.$watch(() => {
+    if (this.watcher === null) {
+      this.watcher = vue.$watch(() => {
         return self._vm.$data.options
       }, (values) => {
         if (values !== false) {
@@ -198,8 +224,9 @@ class Collection extends EventEmitter {
    * Stop the bindings watching
    */
   _stopWatchOptions () {
-    if (this.watchers.options) {
-      this.watchers.options()
+    if (this.watcher) {
+      this.watcher()
+      this.watcher = null
     }
   }
 
