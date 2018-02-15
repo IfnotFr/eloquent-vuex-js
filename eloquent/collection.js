@@ -66,6 +66,8 @@ class Collection extends EventEmitter {
     } else {
       this._vm.$data.enableCount--
     }
+
+    return this
   }
 
   _disable () {
