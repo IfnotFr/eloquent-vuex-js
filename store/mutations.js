@@ -15,12 +15,15 @@ let getItems = ({item, items}) => {
 export default {
   get () {
     return {
-      create (states, {state = null, item = null, items = []} = {}) {
+      create (states, {state = null, item = null, items = [], updateOnExists = true} = {}) {
         items = getItems({item, items})
 
         for (let i = 0; i < items.length; i++) {
           if (!isItemInStore(states[state], items[i])) {
             states[state].push(items[i])
+          } else if (updateOnExists) {
+            let index = states[state].findIndex((testItem) => testItem.id === items[i].id)
+            Vue.set(states[state], index, items[i])
           }
         }
       },
