@@ -203,6 +203,9 @@ class Collection extends EventEmitter {
 
       self.emit('loaded', self.all())
       self._vm.$data.loading = false
+
+      // Notify the dataset
+      self.state._notify()
     })
   }
 

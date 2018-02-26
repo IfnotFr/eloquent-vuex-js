@@ -123,6 +123,13 @@ class State {
       return testItem.id === item.id
     })) !== 'undefined'
   }
+
+  /*
+   * Notify the state for edited datas
+   */
+  _notify () {
+    this.store.state[this.module][this.state].__ob__.dep.notify()
+  }
 }
 
 export default State
