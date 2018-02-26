@@ -105,8 +105,12 @@ class Collection extends EventEmitter {
   }
 
   refresh (options) {
+    let watch = this._isWatchingOptions()
+
     if (options) {
+      if(watch) this._stopWatchOptions()
       this._setOptions(options)
+      if(watch) this._watchOptions()
     }
 
     this._populate()
@@ -200,6 +204,10 @@ class Collection extends EventEmitter {
       self.emit('loaded', self.all())
       self._vm.$data.loading = false
     })
+  }
+
+  _isWatchingOptions () {
+    return this.watcher !== null
   }
 
   /*
