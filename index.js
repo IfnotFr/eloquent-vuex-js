@@ -126,6 +126,8 @@ class EloquentVuex {
         if (state._exists(options.item)) {
           state._removeItems([options.item])
         }
+      } else {
+        this.store.commit(mutationName, options)
       }
     } else {
       this.store.commit(mutationName, options)
