@@ -6,96 +6,57 @@ class EloquentVuex {
   constructor () {
     this.states = {}
     this.events = new EventEmitter()
+    this.driver = null
   }
 
-  install (Vue, {echo, store}, options) {
-    this.echo = echo
-    this.store = store
+  create (options) {
+    let self = this
 
-    this.options = this.getOptions(options)
-
-    // Subscribing to channels
-    if (this.options.channel.length > 0) {
-      this.listenPublic(this.options.channel)
-    }
-    if (this.options.private.length > 0) {
-      this.listenPrivate(this.options.channel)
-    }
-
-    // Binding this singleton proxified to vue
-    Vue.prototype.$eloquent = new Proxy(this, {
-      get: (target, name) => {
-        if(name in target) {
-          return target[name]
-        } else {
-          return new Proxy(target.states[name], {
-            get: (target, name) => {
-              return name in target ? target[name] : target.collections[name]
-            }
-          })
-        }
-      }
-    })
-  }
-
-  createState (store, path) {
-    let module = null
-    let name = null
-
-    if (path.indexOf('/') !== -1) {
-      var lastIndex = path.lastIndexOf('/')
-      module = path.substr(0, lastIndex)
-      name = path.substr(lastIndex + 1)
-    } else {
-      module = null
-      name = path
-    }
-
-    return new State(store, module, name)
-  }
-
-  create (states) {
-    return store => {
-      for (let stateName in states) {
-        this.states[stateName] = this.createState(store, stateName)
-        for (let collectionName in states[stateName]) {
-          this.states[stateName]._addCollection(collectionName, new Collection(collectionName, this.states[stateName], states[stateName][collectionName]))
-        }
-      }
-    }
-  }
-
-  getOptions (options) {
-    return Object.assign({
-      channel: [],
-      private: [],
+    this.options = Object.assign({
       debug: false
     }, options)
-  }
 
-  listenPublic (channels) {
-    let self = this
+    return store => {
+      if ('driver' in this.options) {
+        self.driver = this.options['driver']
+        self.driver.install({eloquentVuex: self, store, options: self.options})
+      } else {
+        console.warn('[ ELOQUENT VUEX ] No sync driver specified. No data will be synchronized.')
+      }
 
-    if (this.options.debug) console.log('[ ELOQUENT VUEX ] Listening to Echo public channels : ' + channels)
+      store.collections = {}
 
-    for (let i = 0; i < channels.length; i++) {
-      this.echo.channel(channels[i])
-        .listen('.Ifnot\\EloquentVuex\\Events\\MutationEvent', (e) => {
-          self.commit(e)
-        })
-    }
-  }
+      // Searching for all modules availables
+      for (let namespace in store._modulesNamespaceMap) {
+        let module = store._modulesNamespaceMap[namespace]._rawModule
+        namespace = namespace.replace(/\/$/, "")
 
-  listenPrivate (channels) {
-    let self = this
+        // If the current module has come collections to be registered
+        if ('collections' in module) {
+          for (let collectionName in module.collections) {
+            let collection = module.collections[collectionName]
 
-    if (this.options.debug) console.log('[ ELOQUENT VUEX ] Listening to Echo private channels : ' + channels)
+            if(!('state' in collection)) {
+              console.error('[ ELOQUENT VUEX ] Could not build collection ' + namespace + '/' + collectionName + ', no state specified.')
+              continue
+            }
 
-    for (let i = 0; i < channels.length; i++) {
-      this.echo.private(channels[i])
-        .listen('.Ifnot\\EloquentVuex\\Events\\MutationEvent', (e) => {
-          self.commit(e)
-        })
+            let stateName = namespace + '/' + collection.state
+
+            // Check if the collection state need to be created
+            if (!(collection.state in this.states)) {
+              this.states[stateName] = new State(store, namespace, collection.state)
+            }
+
+            // Create the collection into the state
+            let instance = new Collection(collectionName, this.states[stateName], collection)
+            this.states[stateName]._addCollection(collectionName, instance)
+
+            // Build the collection accessor into the store
+            store.collections[namespace + '/' + collectionName] = instance
+          }
+        }
+      }
     }
   }
 
