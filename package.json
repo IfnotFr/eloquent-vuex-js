@@ -1,6 +1,6 @@
 {
   "name": "eloquent-vuex",
-  "version": "0.1.9",
+  "version": "0.2.0",
   "homepage": "https://github.com/Ifnot/eloquent-vuex-js",
   "bugs": "https://github.com/Ifnot/eloquent-vuex-js/issues",
   "description": "The vuejs library for Eloquent Vuex.",
