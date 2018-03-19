@@ -9,9 +9,6 @@ class State {
     this.collections = {}
 
     let self = this
-    setInterval(() => {
-      self._garbageCollector()
-    }, 60 * 1000)
   }
 
   /*

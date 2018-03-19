@@ -16,6 +16,10 @@ class EloquentVuex {
       debug: false
     }, options)
 
+    setInterval(() => {
+      self._garbageCollector()
+    }, 5000)
+
     return store => {
       if ('driver' in this.options) {
         self.driver = this.options['driver']
@@ -103,6 +107,13 @@ class EloquentVuex {
 
   once (event, handler) {
     this.events.once(event, handler)
+  }
+
+  _garbageCollector() {
+    for(let name in this.states) {
+      let state = this.states[name]
+      state._garbageCollector()
+    }
   }
 }
 
