@@ -166,9 +166,9 @@ class Collection extends EventEmitter {
       })
 
       if (filtered.length !== items.length) {
-        console.warn('[ ELOQUENT VUEX ] Collection ' + self.state.module + '/' + self.state.state + '/' + self.name + ' loaded ' + items.length + ' items, but filtered ' + (items.length - filtered.length) + ' of them directly. Make sure your loader and your filter conditions are similar in order to optimize items loading.')
+        console.warn('[ ELOQUENT VUEX ] Collection ' + self.state.module + '/' + self.name + ' (state ' + self.state.state + ') loaded ' + items.length + ' items, but filtered ' + (items.length - filtered.length) + ' of them directly. Make sure your loader and your filter conditions are similar in order to optimize items loading.')
       } else {
-        console.log('[ ELOQUENT VUEX ] Collection ' + self.state.module + '/' + self.state.state + '/' + self.name + ' loaded ' + items.length + ' items.')
+        console.log('[ ELOQUENT VUEX ] Collection ' + self.state.module + '/' + self.name + ' (state ' + self.state.state + ') loaded ' + items.length + ' items.')
       }
 
       if(filtered.length > 0) {
