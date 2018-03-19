@@ -48,7 +48,7 @@ class EloquentVuex {
             let stateName = namespace + '/' + collection.state
 
             // Check if the collection state need to be created
-            if (!(collection.state in this.states)) {
+            if (!(stateName in this.states)) {
               this.states[stateName] = new State(store, namespace, collection.state)
             }
 
