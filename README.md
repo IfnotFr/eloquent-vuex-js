@@ -6,56 +6,40 @@ This is the Vuejs client package for [Eloquent Vuex](https://github.com/Ifnot/el
 
     npm install -S eloquent-vuex
 
-### Configuration
+## Quick start
 
-#### Bring Echo events to your Stores
-
-Use the built-in `StoreCommiter` for a quick start :
+Configure your Laravel Echo driver, and add the plugin into your Vuex store :
 
 ```js
-// Prepare your echo configuration
+import cars from './modules/cars' // Import a example module used for the demo
+
 import Echo from 'laravel-echo'
-let echo = new Echo({ ... })
+let echo = new Echo({ ... }) // Here working Echo configuration
 
-// Load your vuex store object (in my example i just put it inside a ./store.js)
-import store from './store'
-
-// Set the channels you want to use (by default "public")
-let channels = ['public']
-
-// Map the events with the StoreCommiter
-import StoreCommiter from 'eloquent-vuex/store-commiter'
-Vue.use(StoreCommiter, { echo, channels, store })
-```
-
-#### Configure Vuex
-
-For each of your laravel models you should create a corresponding store module with the plural, snake case name of your class. Below the examples corresponding to the [server-side example](https://github.com/Ifnot/laravel-vuex-php).
-
-##### Main store :
-
-```js
-import Vue from 'vue'
-import Vuex from 'vuex'
-
-Vue.use(Vuex)
-
-import cars from './modules/cars'
-
-export default new Vuex.Store({
+// Create your vuex store using the plugin
+let store = new Vuex.Store({
+  plugins: [
+    eloquentVuex.create({
+      driver: new EchoDriver({
+        echo,
+        channels: [], // Public channels you want to listen
+        privateChannels: [] // Private channels you want to listen
+      })
+    })
+  ],
   modules: {
-    cars
+    cars // Here is our demo vuex module
   }
 })
 ```
 
-##### `cars` store module :
+Create the demo vuex module into `./modules/cars.js` (it should be namespaced) :
 
 ```js
-import EventMutations from 'eloquent-vuex/mutations/event-mutations'
+import Mutations from 'eloquent-vuex/store/mutations'
 
 const state = {
-  all: []
+  all: [] // A state is required for holding all the models (default is "all")
 }
 
 const getters = {
@@ -64,7 +48,9 @@ const getters = {
 
 const actions = {}
 
-const mutations = EventMutations.get()
+const mutations = {
+  ...Mutations.get() // Append prebuilt mutations for handling eloquent mutations
+}
 
 export default {
   namespaced: true,
@@ -76,6 +62,10 @@ export default {
 
 ```
 
-### Example
+Now the client has the minimum configuration for a `car` example module.
 
-Take a look at the [Eloquent Vuex Js Example](https://github.com/Ifnot/eloquent-vuex-js-example).
+> For this example working, make sure your created a `Car` model on your server side (Laravel project) and you are listening modifications with `Vuex::sync`. Pl
+
+## How it works
+
+For each of your laravel models you should create a namespaced store module with the plural, snake case name of your class. When `eloquent-vuex` catch a mutation send from Laravel through Echo, the package will convert it to a mutation loaded by `Mutations.get()` into your module. This mutation will change the `all` state.
