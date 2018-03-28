@@ -1,12 +1,13 @@
 import EventEmitter from 'events'
 import State from './eloquent/state'
 import Collection from './eloquent/collection'
+import Events from './events'
 
 class EloquentVuex {
   constructor () {
     this.states = {}
-    this.events = new EventEmitter()
     this.store = null
+    this.events = Events
     this.driver = null
   }
 
@@ -102,14 +103,6 @@ class EloquentVuex {
     }
 
     this.events.emit(mutationName, options)
-  }
-
-  on (event, handler) {
-    this.events.on(event, handler)
-  }
-
-  once (event, handler) {
-    this.events.once(event, handler)
   }
 
   _garbageCollector() {
