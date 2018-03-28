@@ -20,7 +20,7 @@ class EloquentVuex {
 
     setInterval(() => {
       self._garbageCollector()
-    }, 5000)
+    }, 1000 * 60)
 
     return store => {
       self.store = store
