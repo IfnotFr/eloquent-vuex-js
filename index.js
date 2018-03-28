@@ -6,6 +6,7 @@ class EloquentVuex {
   constructor () {
     this.states = {}
     this.events = new EventEmitter()
+    this.store = null
     this.driver = null
   }
 
@@ -21,6 +22,8 @@ class EloquentVuex {
     }, 5000)
 
     return store => {
+      self.store = store
+
       if ('driver' in this.options) {
         self.driver = this.options['driver']
         self.driver.install({eloquentVuex: self, store, options: self.options})
