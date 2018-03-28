@@ -1,6 +1,6 @@
 # Eloquent Vuex (Client) - WIP
 
-This is the Vuejs client package for [Eloquent Vuex](https://github.com/Ifnot/eloquent-vuex-php).
+This is the vuejs client package for [Eloquent Vuex](https://github.com/Ifnot/eloquent-vuex-php).
 
 ## Installation
 
@@ -8,7 +8,7 @@ This is the Vuejs client package for [Eloquent Vuex](https://github.com/Ifnot/el
 
 ## Quick start
 
-Configure your Laravel Echo driver, and add the plugin into your Vuex store :
+Configure your laravel echo driver, and add the plugin into your vuex store :
 
 ```js
 import cars from './modules/cars' // Import a example module used for the demo
@@ -64,8 +64,8 @@ export default {
 
 Now the client has the minimum configuration for a `car` example module.
 
-> For this example working, make sure your created a `Car` model on your server side (Laravel project) and you are listening modifications with `Vuex::sync`. Pl
+> For this example working, make sure your created a `Car` model on your server side (laravel project) and you are listening modifications with `Vuex::sync`.
 
 ## How it works
 
-For each of your laravel models you should create a namespaced store module with the plural, snake case name of your class. When `eloquent-vuex` catch a mutation send from Laravel through Echo, the package will convert it to a mutation loaded by `Mutations.get()` into your module. This mutation will change the `all` state.
+For each of your laravel models you should create a namespaced store module with the plural, snake case name of your class. When `eloquent-vuex` catch a mutation send from laravel through echo, the package will convert it to a mutation loaded by `Mutations.get()` into your module. This mutation will change the `all` state.
