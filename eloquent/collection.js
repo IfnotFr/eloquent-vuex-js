@@ -199,13 +199,17 @@ class Collection extends EventEmitter {
     self._vm.$data.loading = true
 
     this.handler.loader().then(items => {
-      self.addItems(items)
+      if (!Array.isArray(items)) {
+        console.error('[ ELOQUENT VUEX ] Collection loader of ' + self.state.module + '/' + self.name + ' returned a non array response.')
+      } else {
+        self.addItems(items)
 
-      self.emit('loaded', self.all())
-      self._vm.$data.loading = false
+        self.emit('loaded', self.all())
+        self._vm.$data.loading = false
 
-      // Notify the dataset
-      self.state._notify()
+        // Notify the dataset
+        self.state._notify()
+      }
     })
   }
 
