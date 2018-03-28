@@ -22,7 +22,7 @@ let store = new Vuex.Store({
     eloquentVuex.create({
       driver: new EchoDriver({
         echo,
-        channels: [], // Public channels you want to listen
+        channels: ['public'], // Public channels you want to listen
         privateChannels: [] // Private channels you want to listen
       })
     })
